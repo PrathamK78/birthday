@@ -75,7 +75,20 @@ svg{width:100%;height:auto;display:block;overflow:visible}
 @keyframes puff{0%{opacity:.7;transform:translateY(0)}100%{opacity:0;transform:translateY(-34px)}}
 .count{margin-top:6px;font-weight:500;color:var(--ink);min-height:1.6em}
 
-.polaroids{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin:26px 0 4px;animation:rise .8s .2s cubic-bezier(.2,.9,.3,1) both}
+#show{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:max(24px,env(safe-area-inset-top,0px)) 20px max(24px,env(safe-area-inset-bottom,0px));background:var(--bg);background-image:radial-gradient(900px 600px at 20% 0%,var(--bg2),transparent 60%);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#slide{width:100%;min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#slide>*{animation:slidein .55s cubic-bezier(.2,.9,.3,1) both}
+@keyframes slidein{from{opacity:0;transform:translateY(18px) scale(.96) rotate(var(--r,0deg))}to{opacity:1;transform:rotate(var(--r,0deg))}}
+#slide .pol{width:min(76vw,330px);max-width:none;margin:0}
+#slide .pol .cap{font-size:1rem;margin-top:10px}
+#slide .card h2{font-size:clamp(1.9rem,8vw,2.8rem);max-width:14ch;margin:0 auto}
+#slide .card p{margin-top:12px;font-size:1.05rem}
+#dots{display:flex;gap:6px}
+#dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+#dots i.on{background:var(--coral)}
+#hint{color:var(--muted);font-size:.9rem}
+#skip{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:16px;font:inherit;color:var(--muted);background:none;border:0;padding:8px 10px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#slide>*{animation:none}}
 .pol{width:calc(50% - 12px);max-width:176px;background:#fff;padding:9px 9px 30px;border-radius:4px;box-shadow:0 8px 20px #34163f33;transform:rotate(var(--r,0deg))}
 .pol:nth-child(2n){margin-top:14px}
 .pol img,.pol .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px}
@@ -109,10 +122,10 @@ svg{width:100%;height:auto;display:block;overflow:visible}
 
   <section id="setup" class="hidden">
     <h1>Set up her birthday surprise</h1>
-    <p style="margin-left:0">Add her name and a message from you. Then hand her the screen.</p>
-    <label for="name">Her name</label>
+    <!-- <p style="margin-left:0">Add her name and a message from you. Then hand her the screen.</p> -->
+    <label for="name">Sanya</label>
     <input id="name" type="text" placeholder="e.g. Aanya" autocomplete="off" maxlength="30">
-    <label for="from">Your name</label>
+    <label for="from">Pratham</label>
     <input id="from" type="text" placeholder="e.g. Pratham" autocomplete="off" maxlength="30">
     <label for="msg">Your message</label>
     <textarea id="msg" maxlength="600">Thank you for the laughs, the long talks, and for always being exactly you. I hope this year brings you everything you’ve been quietly wishing for. You deserve all of it.</textarea>
@@ -136,13 +149,19 @@ svg{width:100%;height:auto;display:block;overflow:visible}
     </div>
     <div class="count" id="count" aria-live="polite">5 candles still lit</div>
 
+    <button class="btn hidden" id="showBtn" type="button">Want to see something?</button>
     <div id="letter" class="hidden">
       <h2 id="lt">Dear friend,</h2>
       <p id="lm"></p>
       <div class="sign" id="ls"></div>
     </div>
-    <div id="photos" class="polaroids hidden"></div>
-    <div id="note" class="hidden"><span class="tag">One more thing…</span><p>Ek last baat: jab bhi din kharab ho ya mood off ho, yeh page dobara khol lena. Yaad rakhna, tum jitna sochti ho usse kahin zyada special ho. Aur haan, cake ki treat abhi bhi pending hai, bhoolna mat.</p></div>
+    <div id="show" class="hidden" role="dialog" aria-modal="true" aria-label="Photo slideshow">
+      <button id="skip" type="button">Skip</button>
+      <div id="slide"></div>
+      <div id="dots"></div>
+      <div id="hint">Tap anywhere to continue</div>
+    </div>
+    <div id="note" class="hidden"><span class="tag">One more thing…</span><p>Ek last baat: jab bhi din kharab ho ya mood off ho, yeh page dobara khol lena. Yaad rakhna, tum zyada mat sochna kyuki itna dimaag nhi hai tumhare pass. Aur haan, khana khana pending hai, bhoolna mat :)</p></div>
     <button class="btn hidden" id="noteBtn" type="button">Open when you want to smile</button>
     <button class="btn alt hidden" id="again" type="button">More confetti</button>
   </section>
@@ -156,29 +175,33 @@ svg{width:100%;height:auto;display:block;overflow:visible}
 
   /* ===== EDIT THIS PART ===== */
   var CONFIG={
-    name:"",            /* her name, e.g. "Aanya" */
+    name:"Sanya",            /* her name, e.g. "Aanya" */
     from:"Pratham",
-    message:"Happy Birthday! Ek aur saal purani ho gayi, par akal abhi bhi utni hi hai. Kidding, kidding. (Thodi si.)\n\nCandles bujhane ke liye itni mehnat karwayi, ab cake toh virtual hai par wish bilkul real hai. Toh jo bhi maanga hai, dil se maangna, sirf “bas pizza mil jaye” wali wish nahi chalegi.\n\nSach bolu toh, tum woh insaan ho jiske saath boring se boring din bhi theek lagne lagta hai. Tumhari hasi, tumhare random jokes, aur har baat pe “mujhe pehle se pata tha” bolna. Annoying hai, par miss bhi bahut hota hai.\n\nBas itna chahta hoon ki aane wala saal tumhe woh sab de jo tum deserve karti ho, aur uske upar thoda extra. Aur ek baat bina mazaak ke: tumse baat karna mere din ki sabse achhi cheezon mein se ek hai. Hamesha aise hi rehna. Happy birthday.",
-    /* photos: [{src:"data:image/jpeg;base64,...", cap:"Our trip"}, ...] */
-    photos:[]
+    message:"Happy Birthday! Ek aur saal purani ho gayi, par akal abhi bhi utni hi hai.\n\nAb cake toh virtual hai par wish bilkul real hai. Toh jo bhi maanga hai, dil se maangna, sirf “bas phulki mil jaye” wali wish nahi chalegi.\n\nThank you meri saari bakwaas,silly jokes and kabhi kabhi bina soche samjhe boli hui baatien jhelni ke liye, sometimes words mere galat ho sakte hai but intentions kabhi nhi.\n\nReally happy to have met you. Happy birthday.",
+    /* Slideshow: set src to a photo file (e.g. src:"pic1.jpg"); without src a placeholder shows. */
+    silly:[
+      {src:"silly1.jpg",cap:"Exhibit A: professional pagal"},
+      {src:"silly2.jpg",cap:"Exhibit B: zero sharam, full style"},
+      {src:"silly3.jpg",cap:"Exhibit C: iss chehre ki apni hi opinions hain"}
+    ],
+    together:[
+      {src:"togther.jpg",cap:"Hmm achi photo hai"}
+    ],
+    titles:{
+      intro:{h:"Ek chhota sa slideshow",p:"Pehle thoda embarrassing content."},
+      silly:{h:"Exhibit A to Z",p:"You, being a menace."},
+      together:{h:"Aur phir hum dono",p:""}
+    }
   };
   /* ========================== */
 
   (function init(){
     var n=CONFIG.name;
     $("title").textContent=n?("Happy Birthday, "+n+"!"):"Happy Birthday!";
-    $("lt").textContent=n?("Dear "+n+","):"Dear you,";
+    $("lt").textContent=n?("Hey "+n+","):"Dear you,";
     $("lm").textContent=CONFIG.message;
-    $("ls").textContent=CONFIG.from?("With love, "+CONFIG.from):"With love";
-    var list=CONFIG.photos.length?CONFIG.photos:[{cap:"Add a photo"},{cap:"Add a photo"},{cap:"Add a photo"},{cap:"Add a photo"}];
-    var rots=[-5,4,-3,6,-4,3];
-    list.forEach(function(p,i){
-      var d=document.createElement("div");d.className="pol";d.style.setProperty("--r",rots[i%rots.length]+"deg");
-      if(p.src){var im=document.createElement("img");im.src=p.src;im.alt=p.cap||"Photo";d.appendChild(im)}
-      else{var ph=document.createElement("div");ph.className="ph";ph.textContent="Your photo here";d.appendChild(ph)}
-      var c=document.createElement("span");c.className="cap";c.textContent=p.cap||"";d.appendChild(c);
-      $("photos").appendChild(d);
-    });
+    $("ls").textContent=CONFIG.from?("From, "+CONFIG.from):"From";
+
   })();
 
   /* candles */
@@ -224,15 +247,68 @@ svg{width:100%;height:auto;display:block;overflow:visible}
 
   function celebrate(){
     setTimeout(function(){
-      $("letter").classList.remove("hidden");
-      $("photos").classList.remove("hidden");
-      $("again").classList.remove("hidden");
-      $("noteBtn").classList.remove("hidden");
-      typeLetter();
-      $("letter").scrollIntoView({behavior:"smooth",block:"center"});
+      $("showBtn").classList.remove("hidden");
+      $("showBtn").scrollIntoView({behavior:"smooth",block:"center"});
     },500);
     shower();
   }
+
+  function revealLetter(){
+    $("letter").classList.remove("hidden");
+    $("again").classList.remove("hidden");
+    $("noteBtn").classList.remove("hidden");
+    typeLetter();
+    $("letter").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+
+  /* slideshow: intro, silly photos of her, then photos together */
+  var steps=[], si=0;
+  function buildSteps(){
+    var T=CONFIG.titles;
+    steps=[{card:T.intro},{card:T.silly}];
+    CONFIG.silly.forEach(function(p){steps.push({photo:p})});
+    steps.push({card:T.together});
+    CONFIG.together.forEach(function(p){steps.push({photo:p})});
+  }
+  function render(){
+    var s=steps[si], el=$("slide"), d=document.createElement("div");
+    el.innerHTML="";
+    if(s.card){
+      d.className="card";
+      var h=document.createElement("h2");h.textContent=s.card.h;d.appendChild(h);
+      var p=document.createElement("p");p.textContent=s.card.p;d.appendChild(p);
+    }else{
+      d.className="pol";d.style.setProperty("--r",(si%2?3:-3)+"deg");
+      if(s.photo.src){var im=document.createElement("img");im.src=s.photo.src;im.alt=s.photo.cap||"Photo";d.appendChild(im)}
+      else{var ph=document.createElement("div");ph.className="ph";ph.textContent="Your photo here";d.appendChild(ph)}
+      var c=document.createElement("span");c.className="cap";c.textContent=s.photo.cap||"";d.appendChild(c);
+    }
+    el.appendChild(d);
+    var dots=$("dots");dots.innerHTML="";
+    steps.forEach(function(_,i){var b=document.createElement("i");if(i===si)b.className="on";dots.appendChild(b)});
+    $("hint").textContent=si===steps.length-1?"Tap for the letter":"Tap anywhere to continue";
+  }
+  function openShow(){
+    buildSteps();si=0;render();
+    $("show").classList.remove("hidden");
+    $("showBtn").classList.add("hidden");
+    document.body.style.overflow="hidden";
+  }
+  function closeShow(){
+    $("show").classList.add("hidden");
+    document.body.style.overflow="";
+    revealLetter();
+    shower();
+  }
+  function next(){if(si<steps.length-1){si++;render()}else closeShow()}
+  $("showBtn").addEventListener("click",openShow);
+  $("show").addEventListener("click",next);
+  $("skip").addEventListener("click",function(e){e.stopPropagation();closeShow()});
+  document.addEventListener("keydown",function(e){
+    if($("show").classList.contains("hidden"))return;
+    if(e.key==="ArrowRight"||e.key===" "||e.key==="Enter"){e.preventDefault();next()}
+    if(e.key==="Escape")closeShow();
+  });
   $("again").addEventListener("click",function(){shower();playTune()});
   $("noteBtn").addEventListener("click",function(){
     $("noteBtn").classList.add("hidden");
